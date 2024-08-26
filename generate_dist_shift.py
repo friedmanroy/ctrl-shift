@@ -8,6 +8,11 @@ from pathlib import Path
 import click
 import time
 
+import sys
+import os
+sys.path.insert(1, os.getcwd() + '/edm')
+import dnnlib
+
 
 def trunc_coords(shape: tuple, trunc: int):
     return torch.randn(shape)*(trunc/100)
@@ -44,8 +49,10 @@ def overlap_coords(shape: tuple, value: int):
     return extend_coords(shape, value=50, target=target[None])
 
 
-def generate_cifar(z_func, N: int, bs: int, its: int, save_path: str):
-    with open('pretrained/edm-cifar10-32x32-cond-vp.pkl', 'rb') as f: net = pickle.load(f)['ema'].to('cuda')
+def generate_cifar(z_func, N: int, bs: int, its: int, save_path: str,
+                      network_pkl: str='https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/'):
+    with dnnlib.util.open_url(network_pkl + 'edm-cifar10-32x32-cond-vp.pkl', verbose=False) as f:
+        net = pickle.load(f)['ema'].to('cuda')
 
     full_labels = np.random.choice(10, N).astype(int)
     images = None
@@ -76,8 +83,10 @@ def generate_cifar(z_func, N: int, bs: int, its: int, save_path: str):
     return images, full_labels
 
 
-def generate_imagenet(z_func, N: int, bs: int, its: int, save_path: str):
-    with open('pretrained/edm-imagenet-64x64-cond-adm.pkl', 'rb') as f: net = pickle.load(f)['ema'].to('cuda')
+def generate_imagenet(z_func, N: int, bs: int, its: int, save_path: str,
+                      network_pkl: str='https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/'):
+    with dnnlib.util.open_url(network_pkl + 'edm-imagenet-64x64-cond-adm.pkl', verbose=False) as f:
+        net = pickle.load(f)['ema'].to('cuda')
 
     full_labels = np.random.choice(10, N).astype(int)
 
