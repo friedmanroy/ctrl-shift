@@ -15,10 +15,33 @@ import dnnlib
 
 
 def trunc_coords(shape: tuple, trunc: int):
+    """
+    Samples latent codes for the truncation data.
+    Args:
+        shape: a tuple depicting the shape of the latent codes, usually a tuple of size [N, 3, h, w]
+        trunc: the amount of truncation to apply - the controlling parameter for the distribution shift
+
+    Returns:
+        the generated latent codes, a torch Tensor with the same shape as the "shape" input
+
+    """
     return torch.randn(shape)*(trunc/100)
 
 
 def extend_coords(shape: tuple, value: int, target=None):
+    """
+    Samples latent codes for the extend data. For this data, a "target point" is defined, after a spherical
+    interpolation is applied between this target and random samples from a standard normal distribution. The amount of
+    interpolation is defined by the "value" argument.
+    Args:
+        shape: a tuple depicting the shape of the latent codes, usually a tuple of size [N, 3, h, w]
+        value: the controlling parameter for the distribution shift, an int between 50 and 100
+        target: the target for the spherical interpolation; if no target is supplied, one is sampled with a fixed seed
+
+    Returns:
+        the generated latent codes, a torch Tensor with the same shape as the "shape" input
+
+    """
     t = value/100
     zs = torch.randn(shape)
     if target is None:
@@ -34,6 +57,18 @@ def extend_coords(shape: tuple, value: int, target=None):
 
 
 def overlap_coords(shape: tuple, value: int):
+    """
+    Samples latent codes for the overlap data. For this data, a spherical interpolation between two targets is defined
+    according to the "value" parameters, after which a spherical interpolation of 50% between this target and samples
+    from a standard normal are returned.
+    Args:
+        shape: a tuple depicting the shape of the latent codes, usually a tuple of size [N, 3, h, w]
+        value: the controlling parameter for the distribution shift, an int between 0 and 100
+
+    Returns:
+        the generated latent codes, a torch Tensor with the same shape as the "shape" input
+
+    """
     state = np.random.get_state()
     np.random.seed(45678)
     target1 = torch.from_numpy(np.random.randn(*shape[1:])).float()
@@ -51,6 +86,20 @@ def overlap_coords(shape: tuple, value: int):
 
 def generate_cifar(z_func, N: int, bs: int, its: int, save_path: str,
                       network_pkl: str='https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/'):
+    """
+    Generate images from EDM's CIFAR10 model
+    Args:
+        z_func: function for sampling from the latent space should be used (defined according to the experiment type)
+        N: number of samples to generate
+        bs: the batch size of images to generate at any point
+        its: number of iterations to run the diffusion model
+        save_path: saving path for generated images
+        network_pkl: path to pretrained EDM network
+
+    Returns:
+        the images, as a numpy array with shape [N, 32, 32, 3], and labels, as a numpy array with shape [N,]
+
+    """
     with dnnlib.util.open_url(network_pkl + 'edm-cifar10-32x32-cond-vp.pkl', verbose=False) as f:
         net = pickle.load(f)['ema'].to('cuda')
 
@@ -85,6 +134,19 @@ def generate_cifar(z_func, N: int, bs: int, its: int, save_path: str,
 
 def generate_imagenet(z_func, N: int, bs: int, its: int, save_path: str,
                       network_pkl: str='https://nvlabs-fi-cdn.nvidia.com/edm/pretrained/'):
+    """
+    Generate images from EDM's ImageNet model
+    Args:
+        z_func: function for sampling from the latent space should be used (defined according to the experiment type)
+        N: number of samples to generate
+        bs: the batch size of images to generate at any point
+        its: number of iterations to run the diffusion model
+        save_path: saving path for generated images
+        network_pkl: path to pretrained EDM network
+
+    Returns: the images, as a numpy array with shape [N, 64, 64, 3], and labels, as a numpy array with shape [N,]
+
+    """
     with dnnlib.util.open_url(network_pkl + 'edm-imagenet-64x64-cond-adm.pkl', verbose=False) as f:
         net = pickle.load(f)['ema'].to('cuda')
 
@@ -120,14 +182,14 @@ def generate_imagenet(z_func, N: int, bs: int, its: int, save_path: str,
 
 @click.command()
 @click.option('--dataset',  help='dataset to generate', type=str, required=True)
-@click.option('--exp',      help='experiment to generate', type=str, required=True)
-@click.option('--value',    help='number controlling the value of the experiment', type=int, required=True)
+@click.option('--exp',      help='experiment to generate, one of ["trunc", "overlap", "extend"]', type=str, required=True)
+@click.option('--value',    help='number controlling the amount of shift in the experiment', type=int, required=True)
 @click.option('--n_steps',  help='number of diffusion iterations', type=click.IntRange(min=1), default=50, show_default=True)
-@click.option('--n_train',  help='number of training examples', type=int, default=50000, show_default=True)
-@click.option('--n_val',    help='number of validation examples', type=int, default=1000, show_default=True)
-@click.option('--n_test',   help='number of test examples', type=int, default=5000, show_default=True)
+@click.option('--n_train',  help='number of training examples to generate', type=int, default=50000, show_default=True)
+@click.option('--n_val',    help='number of validation examples to generate', type=int, default=1000, show_default=True)
+@click.option('--n_test',   help='number of test examples to generate', type=int, default=5000, show_default=True)
 @click.option('--batch',    help='batch size for image generation', type=int, default=100, show_default=True)
-@click.option('--root',     help='root path', type=str, default='data/', show_default=True)
+@click.option('--root',     help='root path for saving the generated data', type=str, default='data/', show_default=True)
 @click.option('--name',     help='folder name', type=str, default=None, show_default=True)
 def main(dataset: str, exp: str, value: int, **kwargs):
     print(f'dataset={dataset}, exp={exp}, value={value}')
