@@ -42,5 +42,5 @@ As previously mentioned, we use [EDM](https://arxiv.org/abs/2206.00364) to gener
 
 ---
 
-[1]: See Appendix A in the paper for more information on these parameter values.
+[^1]: See Appendix A in the paper for more information on these parameter values.
 [^2]: The classes are those indexed by 0,100,...,900 in the original ImageNet dataset to ensure that the classes don't semantically overlap.
