@@ -15,7 +15,7 @@ Our data is based on CIFAR10 and ImageNet, using EDM to generate our data. We ge
 
 ![Illustration of distribution shifts](assets/generated_shifts.png)
 
-For each type of distribution shift introduced in our work, multiple shifts are considered. In our experiments, we generated a training dataset only for the base shift (the one with the smallest controlling parameter). For instance, in the `truncation` distribution shift, we considered shifts with controlling parameters in the range `[90, 95, 100, 105, 110]`[^1].  Training data was generated for `trunc=90` and test data was generated for all of them. Training only on one shift amount and testing on all of the others gives a better indication of the degradation in performance of the model under distribution shift.
+For each type of distribution shift introduced in our work, multiple shifts are considered. In our experiments, we generated a training dataset only for the base shift (the one with the smallest controlling parameter). For instance, in the `truncation` distribution shift, we considered shifts with controlling parameters in the range `[90, 95, 100, 105, 110]` [^1].  Training data was generated for `trunc=90` and test data was generated for all of them. Training only on one shift amount and testing on all of the others gives a better indication of the degradation in performance of the model under distribution shift.
 
 Here are results we saw for various popular architectures on the datasets we created:
 
